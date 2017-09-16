@@ -52,7 +52,9 @@ app.use(expressWinston.logger({
     ]
 }));
 
+console.log('router start.');
 router(app);
+console.log('router end.');
 
 app.use(expressWinston.errorLogger({
     transports: [
