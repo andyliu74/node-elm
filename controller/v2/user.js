@@ -24,6 +24,7 @@ class User extends AddressComponent {
 				type: 'ERROR_CAPTCHA',
 				message: '验证码失效',
 			})
+			
 			return
 		}
 		const form = new formidable.IncomingForm();
