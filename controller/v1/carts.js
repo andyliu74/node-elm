@@ -11,7 +11,7 @@ class Carts extends AddressComponent{
 		super();
 		this.extra = [{
 			description: '',
-			name: '餐盒',
+			name: '餐盒1',
 			price: 0,
 			quantity: 1,
 			type: 0,
