@@ -6,9 +6,10 @@ import entryData from '../../InitData/doctor'
 const Schema = mongoose.Schema;
 
 const entrySchema = new Schema({
-	name: String,
 	did: Number,
+	name: String,
 	desc: String,
+	image_url: String,
 });
 
 const Doctor = mongoose.model('Doctor', entrySchema)

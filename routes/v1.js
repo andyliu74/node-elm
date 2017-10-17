@@ -13,6 +13,9 @@ import Order from '../controller/v1/order'
 import Hongbao from '../controller/promotion/hongbao'
 const baseHandle = new BaseComponent();
 const router = express.Router();
+const passport = require('passport');
+
+require('../passport')(passport);
 
 router.get('/cities', CityHandle.getCity);
 router.get('/cities/:id', CityHandle.getCityById);
@@ -22,7 +25,7 @@ router.post('/addimg/:type', baseHandle.uploadImg);
 router.post('/carts/checkout', Carts.checkout);
 router.get('/carts/:cart_id/remarks', Remark.getRemarks);
 router.post('/captchas', Captchas.getCaptchas);
-router.get('/user', User.getInfo);
+router.get('/user', passport.authenticate('bearer', { session: false }), User.getInfo);
 router.get('/user/:user_id', User.getInfoById);
 router.get('/users/list', User.getUserList);
 router.get('/users/count', User.getUserCount);

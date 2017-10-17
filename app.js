@@ -11,6 +11,9 @@ import path from 'path';
 import history from 'connect-history-api-fallback';
 import Statistic from './middlewares/statistic'
 
+const passport = require('passport');// 用户认证模块passport
+const Strategy = require('passport-http-bearer').Strategy;// token验证模块
+
 const app = express();
 
 app.all('*', (req, res, next) => {
@@ -28,6 +31,7 @@ app.all('*', (req, res, next) => {
 
 app.use(Statistic.apiRecord)
 const MongoStore = connectMongo(session);
+app.use(passport.initialize());// 初始化passport模块
 app.use(cookieParser());
 app.use(session({
 	  	name: config.session.name,

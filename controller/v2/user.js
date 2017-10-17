@@ -7,6 +7,8 @@ import UserModel from '../../models/v2/user'
 import crypto from 'crypto'
 import dtime from 'time-formater'
 
+const jwt = require('jsonwebtoken');
+
 class User extends AddressComponent {
 	constructor(){
 		super()
@@ -16,17 +18,6 @@ class User extends AddressComponent {
 		this.updateAvatar = this.updateAvatar.bind(this);
 	}
 	async login(req, res, next){
-		// const cap = req.cookies.cap;
-		// if (!cap) {
-		// 	console.log('验证码失效')
-		// 	res.send({
-		// 		status: 0,
-		// 		type: 'ERROR_CAPTCHA',
-		// 		message: '验证码失效',
-		// 	})
-
-		// 	return
-		// }
 		const form = new formidable.IncomingForm();
 		form.parse(req, async (err, fields, files) => {
 			const {username, password} = fields;
@@ -36,9 +27,6 @@ class User extends AddressComponent {
 				}else if(!password){
 					throw new Error('密码参数错误');
 				}
-				// }else if(!captcha_code){
-				// 	throw new Error('验证码参数错误');
-				// }
 			}catch(err){
 				console.log('登陆参数错误', err);
 				res.send({
@@ -48,15 +36,6 @@ class User extends AddressComponent {
 				})
 				return
 			}
-			// if (cap.toString() !== captcha_code.toString()) {
-			// 	res.send({
-			// 		status: 0,
-			// 		type: 'ERROR_CAPTCHA',
-			// 		message: '验证码不正确',
-			// 	})
-			// 	return
-			// }
-			const newpassword = this.encryption(password);
 			try{
 				const user = await UserModel.findOne({username});
 				//创建一个新的用户
@@ -64,25 +43,27 @@ class User extends AddressComponent {
 					const user_id = await this.getId('user_id');
 					const cityInfo = await this.guessPosition(req);
 					const registe_time = dtime().format('YYYY-MM-DD HH:mm');
-					const newUser = {username, password: newpassword, user_id};
+					const token = jwt.sign({name: username}, 'learnRestApiwithNickjs', {expiresIn: 10080});
+					const newUser = {username, password: password, user_id, token: token};
 					const newUserInfo = {username, user_id, id: user_id, city: cityInfo.city, registe_time, };
 					UserModel.create(newUser);
 					const createUser = new UserInfoModel(newUserInfo);
 					const userinfo = await createUser.save();
-					req.session.user_id = user_id;
-					res.send(userinfo);
-				}else if (user.password.toString() !== newpassword.toString()) {
-					console.log('用户登录密码错误')
-					res.send({
-						status: 0,
-						type: 'ERROR_PASSWORD',
-						message: '密码错误',
-					})
-					return 
+					res.send({username: username, password: password, token: token});
 				}else{
-					req.session.user_id = user.user_id;
-					const userinfo = await UserInfoModel.findOne({user_id: user.user_id}, '-_id');
-					res.send(userinfo) 
+					// 检查密码是否正确
+					user.comparePassword(password, (err, isMatch) => {
+						if (isMatch && !err) {
+							res.json({
+								success: true,
+								message: '验证成功!',
+								token: 'Bearer ' + user.token,
+								name: user.username
+							});
+						} else {
+							res.send({success: false, message: '认证失败,密码错误!'});
+						}
+					});
 				}
 			}catch(err){
 				console.log('用户登陆失败', err);
@@ -98,18 +79,24 @@ class User extends AddressComponent {
 		const sid = req.session.user_id;
 		const qid = req.query.user_id;
 		const user_id = sid || qid;
-		if (!user_id || !Number(user_id)) {
-			console.log('获取用户信息的参数user_id无效', user_id)
-			res.send({
-				status: 0,
-				type: 'GET_USER_INFO_FAIELD',
-				message: '通过session获取用户信息失败',
-			})
-			return 
-		}
+		// if (!user_id || !Number(user_id)) {
+		// 	console.log('获取用户信息的参数user_id无效', user_id)
+		// 	res.send({
+		// 		status: 0,
+		// 		type: 'GET_USER_INFO_FAIELD',
+		// 		message: '通过session获取用户信息失败',
+		// 	})
+		// 	return 
+		// }
+		console.log('通过session获取用户信息失败');
+		res.send({
+			username: 'andyliu',
+			password: 'aaaaaa'
+		})
+		return
 		try{
 			const userinfo = await UserInfoModel.findOne({user_id}, '-_id');
-			res.send(userinfo) 
+			res.send(userinfo)
 		}catch(err){
 			console.log('通过session获取用户信息失败', err);
 			res.send({
